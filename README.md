@@ -1,6 +1,6 @@
 # Expense Tracker Pro - Backend API
 
-Backend profesional desarrollado con Node.js, Express, Prisma y PostgreSQL para la gestión de gastos personales.
+API REST para la gestión de gastos personales con autenticación JWT, validación de datos y generación de reportes PDF.
 
 ## 🚀 Tecnologías
 
@@ -13,156 +13,62 @@ Backend profesional desarrollado con Node.js, Express, Prisma y PostgreSQL para 
 - **express-validator** - Validación de datos
 - **pdfkit** - Generación de reportes PDF
 
-## 📋 Prerrequisitos
-
-- Node.js (v18 o superior)
-- PostgreSQL (v14 o superior)
-- npm o yarn
-
-## 🔧 Instalación
-
-1. Clonar el repositorio
-```bash
-git clone <url-del-repositorio>
-cd expense-tracker-api
-```
-
-2. Instalar dependencias
-```bash
-npm install
-```
-
-3. Configurar variables de entorno
-```bash
-cp .env .env.local
-# Editar .env.local con tus credenciales de base de datos
-```
-
-4. Configurar la base de datos
-```bash
-# Generar cliente de Prisma
-npm run prisma:generate
-
-# Ejecutar migraciones
-npm run prisma:migrate
-```
-
-5. Iniciar el servidor
-```bash
-npm run dev
-```
-
-El servidor estará disponible en `http://localhost:3000`
-
 ## 📁 Estructura del Proyecto
 
 ```
 expense-tracker-api/
 ├── src/
-│   ├── controllers/    # Lógica de controladores
+│   ├── controllers/    # Controladores de endpoints
 │   ├── routes/         # Definición de rutas
 │   ├── services/       # Lógica de negocio
-│   ├── middleware/     # Middlewares personalizados
-│   ├── validators/     # Validaciones con express-validator
-│   ├── config/         # Configuraciones
-│   ├── utils/          # Utilidades
+│   ├── middleware/     # Middlewares (auth, errores)
+│   ├── validators/     # Validaciones de datos
+│   ├── config/         # Configuración (DB)
+│   ├── utils/          # Utilidades (PDF)
 │   ├── app.js          # Configuración de Express
 │   └── server.js       # Punto de entrada
 ├── prisma/
-│   └── schema.prisma   # Schema de Prisma
+│   └── schema.prisma   # Schema de base de datos
 └── package.json
 ```
 
-## 🔐 Endpoints de Autenticación
+## 🔧 Instalación
 
-### POST /auth/register
-Registrar un nuevo usuario
-```json
-{
-  "name": "Juan Pérez",
-  "email": "juan@example.com",
-  "password": "contraseña123"
-}
+```bash
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+# Editar .env con DATABASE_URL y JWT_SECRET
+
+# Generar cliente de Prisma
+npm run prisma:generate
+
+# Ejecutar migraciones
+npm run prisma:migrate
+
+# Iniciar servidor
+npm run dev
 ```
 
-### POST /auth/login
-Iniciar sesión
-```json
-{
-  "email": "juan@example.com",
-  "password": "contraseña123"
-}
-```
+## 🛠️ Scripts
 
-## 💰 Endpoints de Gastos
-
-### GET /expenses
-Obtener todos los gastos del usuario autenticado
-
-### GET /expenses/:id
-Obtener un gasto específico
-
-### POST /expenses
-Crear un nuevo gasto
-```json
-{
-  "title": "Compra supermercado",
-  "amount": 150.50,
-  "category": "Alimentación",
-  "date": "2024-01-15T10:00:00Z",
-  "method": "Tarjeta",
-  "description": "Compra semanal"
-}
-```
-
-### PUT /expenses/:id
-Actualizar un gasto existente
-
-### DELETE /expenses/:id
-Eliminar un gasto
-
-## 📂 Endpoints de Categorías
-
-### GET /categories
-Obtener todas las categorías
-
-### POST /categories
-Crear una nueva categoría
-```json
-{
-  "name": "Transporte"
-}
-```
-
-## 📊 Endpoints de Reportes
-
-### GET /reports/expenses-pdf
-Generar y descargar un PDF con todos los gastos del usuario
-
-## 🔒 Autenticación
-
-La mayoría de los endpoints requieren autenticación. Incluye el token JWT en el header:
-
-```
-Authorization: Bearer <tu_token_jwt>
-```
-
-## 🛠️ Scripts Disponibles
-
-- `npm run dev` - Iniciar servidor en modo desarrollo con nodemon
-- `npm start` - Iniciar servidor en producción
-- `npm run prisma:generate` - Generar cliente de Prisma
+- `npm run dev` - Servidor en desarrollo (nodemon)
+- `npm start` - Servidor en producción
+- `npm run prisma:generate` - Generar cliente Prisma
 - `npm run prisma:migrate` - Ejecutar migraciones
 - `npm run prisma:studio` - Abrir Prisma Studio
 
-## 📝 Notas
+## 📚 Documentación
 
-- Asegúrate de cambiar el `JWT_SECRET` en producción
-- Configura correctamente la `DATABASE_URL` en el archivo `.env`
-- Las migraciones de Prisma se ejecutan automáticamente en desarrollo
+- **API Documentation:** Ver `API-DOCUMENTATION.md`
+- **Postman Guide:** Ver `POSTMAN-GUIDE.md`
+- **OpenAPI Spec:** Ver `openapi.yaml`
 
-## 📄 Licencia
+## 🔑 Endpoints Principales
 
-ISC
-
-
+- **Auth:** `/auth/register`, `/auth/login`
+- **Expenses:** `/expenses` (GET, POST, PUT, DELETE)
+- **Categories:** `/categories` (GET, POST)
+- **Reports:** `/reports/expenses-pdf` (GET)
+- **Health:** `/health` (GET)
