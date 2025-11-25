@@ -1,0 +1,726 @@
+openapi: 3.0.3
+info:
+  title: Expense Tracker Pro API
+  description: |
+    API REST para la gestión de gastos personales con autenticación JWT, validación de datos, y generación de reportes PDF.
+    
+    ## Características
+    - Autenticación basada en JWT (JSON Web Tokens)
+    - Validación de datos con express-validator
+    - Hash de contraseñas con bcryptjs
+    - Generación de reportes PDF
+    - Filtrado y búsqueda de gastos
+  version: 1.0.0
+  contact:
+    name: API Support
+servers:
+  - url: http://localhost:3000
+    description: Servidor de desarrollo
+
+tags:
+  - name: Auth
+    description: Endpoints de autenticación
+  - name: Expenses
+    description: Gestión de gastos
+  - name: Categories
+    description: Gestión de categorías
+  - name: Reports
+    description: Generación de reportes
+  - name: Health
+    description: Estado del servidor
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenido del login o registro
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          nullable: true
+          example: "Juan Pérez"
+        email:
+          type: string
+          format: email
+          example: "juan@example.com"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00.000Z"
+
+    Expense:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Compra supermercado"
+        amount:
+          type: number
+          format: float
+          example: 150.50
+        category:
+          type: string
+          example: "Alimentación"
+        date:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00.000Z"
+        method:
+          type: string
+          nullable: true
+          example: "Tarjeta"
+        description:
+          type: string
+          nullable: true
+          example: "Compra semanal de alimentos"
+        userId:
+          type: integer
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00.000Z"
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Transporte"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00.000Z"
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "Juan Pérez"
+        email:
+          type: string
+          format: email
+          example: "juan@example.com"
+        password:
+          type: string
+          minLength: 6
+          example: "Password123"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "juan@example.com"
+        password:
+          type: string
+          example: "Password123"
+
+    CreateExpenseRequest:
+      type: object
+      required:
+        - title
+        - amount
+        - category
+        - date
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: "Compra supermercado"
+        amount:
+          type: number
+          format: float
+          minimum: 0.01
+          example: 150.50
+        category:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: "Alimentación"
+        date:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00Z"
+        method:
+          type: string
+          maxLength: 50
+          nullable: true
+          example: "Tarjeta"
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          example: "Compra semanal de alimentos"
+
+    UpdateExpenseRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: "Supermercado actualizado"
+        amount:
+          type: number
+          format: float
+          minimum: 0.01
+          example: 175.00
+        category:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: "Alimentación"
+        date:
+          type: string
+          format: date-time
+          example: "2024-01-16T10:00:00Z"
+        method:
+          type: string
+          maxLength: 50
+          nullable: true
+          example: "Efectivo"
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          example: "Compra mensual actualizada"
+
+    CreateCategoryRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: "Transporte"
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Usuario registrado exitosamente"
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operación exitosa"
+        data:
+          type: object
+
+    ListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        count:
+          type: integer
+          example: 5
+        data:
+          type: array
+          items:
+            type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error de validación"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "email"
+              message:
+                type: string
+                example: "Debe ser un email válido"
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "OK"
+        message:
+          type: string
+          example: "Expense Tracker Pro API está funcionando"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00.000Z"
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Verificar estado del servidor
+      description: Endpoint para verificar que el servidor está funcionando correctamente
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Servidor funcionando correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Registrar nuevo usuario
+      description: Crea un nuevo usuario en el sistema y retorna un token JWT
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Usuario registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: El email ya está registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Iniciar sesión
+      description: Autentica un usuario y retorna un token JWT
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /expenses:
+    get:
+      tags:
+        - Expenses
+      summary: Obtener todos los gastos
+      description: Retorna todos los gastos del usuario autenticado, con opción de filtrar por categoría y rango de fechas
+      operationId: getExpenses
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          description: Filtrar por categoría
+          required: false
+          schema:
+            type: string
+            example: "Alimentación"
+        - name: startDate
+          in: query
+          description: Fecha inicial (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date-time
+            example: "2024-01-01T00:00:00Z"
+        - name: endDate
+          in: query
+          description: Fecha final (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date-time
+            example: "2024-01-31T23:59:59Z"
+      responses:
+        '200':
+          description: Lista de gastos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ListResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Expense'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Expenses
+      summary: Crear nuevo gasto
+      description: Crea un nuevo gasto para el usuario autenticado
+      operationId: createExpense
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExpenseRequest'
+      responses:
+        '201':
+          description: Gasto creado exitosamente
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Expense'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /expenses/{id}:
+    get:
+      tags:
+        - Expenses
+      summary: Obtener gasto por ID
+      description: Retorna un gasto específico del usuario autenticado
+      operationId: getExpenseById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del gasto
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Gasto encontrado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Expense'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Gasto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Expenses
+      summary: Actualizar gasto
+      description: Actualiza un gasto existente del usuario autenticado
+      operationId: updateExpense
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del gasto
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExpenseRequest'
+      responses:
+        '200':
+          description: Gasto actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Expense'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Gasto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Expenses
+      summary: Eliminar gasto
+      description: Elimina un gasto del usuario autenticado
+      operationId: deleteExpense
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del gasto
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Gasto eliminado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Gasto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /categories:
+    get:
+      tags:
+        - Categories
+      summary: Obtener todas las categorías
+      description: Retorna todas las categorías disponibles
+      operationId: getCategories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de categorías
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ListResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Category'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Categories
+      summary: Crear nueva categoría
+      description: Crea una nueva categoría
+      operationId: createCategory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Categoría creada exitosamente
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: La categoría ya existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/expenses-pdf:
+    get:
+      tags:
+        - Reports
+      summary: Generar PDF de gastos
+      description: Genera y descarga un PDF con todos los gastos del usuario autenticado
+      operationId: generateExpensesPDF
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          description: Fecha inicial (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date-time
+            example: "2024-01-01T00:00:00Z"
+        - name: endDate
+          in: query
+          description: Fecha final (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date-time
+            example: "2024-01-31T23:59:59Z"
+      responses:
+        '200':
+          description: PDF generado exitosamente
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
