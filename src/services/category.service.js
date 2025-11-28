@@ -1,8 +1,11 @@
 const { prisma } = require('../config/db');
 
-// Obtener todas las categorías
-async function getAllCategories() {
+// Obtener todas las categorías del usuario
+async function getAllCategories(userId) {
   const categories = await prisma.category.findMany({
+    where: {
+      userId
+    },
     orderBy: {
       name: 'asc'
     }
@@ -11,19 +14,41 @@ async function getAllCategories() {
   return categories;
 }
 
-// Crear una nueva categoría
-async function createCategory(categoryData) {
+// Crear una nueva categoría para el usuario
+async function createCategory(categoryData, userId) {
+  // Verificar si la categoría ya existe para este usuario
+  const existingCategory = await prisma.category.findUnique({
+    where: {
+      name_userId: {
+        name: categoryData.name,
+        userId: userId
+      }
+    }
+  });
+
+  if (existingCategory) {
+    const error = new Error('La categoría ya existe para este usuario');
+    error.statusCode = 409;
+    throw error;
+  }
+
   const category = await prisma.category.create({
-    data: categoryData
+    data: {
+      ...categoryData,
+      userId
+    }
   });
 
   return category;
 }
 
-// Obtener una categoría por ID
-async function getCategoryById(categoryId) {
-  const category = await prisma.category.findUnique({
-    where: { id: categoryId }
+// Obtener una categoría por ID (solo si pertenece al usuario)
+async function getCategoryById(categoryId, userId) {
+  const category = await prisma.category.findFirst({
+    where: {
+      id: categoryId,
+      userId
+    }
   });
 
   if (!category) {

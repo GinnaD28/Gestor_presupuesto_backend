@@ -30,10 +30,16 @@ const errorMiddleware = (err, req, res, next) => {
       message = 'Registro no encontrado';
     }
 
+    // Error de constraint/columna no encontrada (migración no aplicada)
+    if (err.code === 'P2011' || err.code === 'P2012' || err.message?.includes('Unknown arg') || err.message?.includes('Unknown field')) {
+      message = 'Error de schema: La migración de base de datos no se ha aplicado. Ejecuta: npm run prisma:migrate dev';
+    }
+
     return res.status(statusCode).json({
       success: false,
       message,
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+      code: process.env.NODE_ENV === 'development' ? err.code : undefined
     });
   }
 
